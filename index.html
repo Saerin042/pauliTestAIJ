@@ -47,6 +47,9 @@
 	<body
 		class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col h-screen overflow-hidden"
 	>
+		<!-- Elemen Audio Countdown -->
+		<audio id="countdown-sound" src="countdown.mp3" preload="auto"></audio>
+
 		<!-- LAYAR AWAL & INPUT NAMA -->
 		<div
 			id="start-screen"
@@ -84,8 +87,8 @@
 					• 20 Kolom, total <strong>101 Angka</strong> (100 baris isian
 					penjumlahan).<br />
 					• Waktu pengerjaan: <strong>1 menit (60 detik)</strong> per kolom.<br />
-					• Sistem scroll mulus & terpusat otomatis agar tidak ada angka
-					terpotong.<br />
+					• Suara hitung mundur otomatis berbunyi pada 10 detik terakhir setiap
+					kolom.<br />
 					• Grafik performa detail & laporan PDF tersedia di akhir.
 				</div>
 
@@ -245,6 +248,7 @@
 			const participantDisplay = document.getElementById("participant-display");
 			const nameInput = document.getElementById("participant-name");
 			const nameError = document.getElementById("name-error");
+			const countdownSound = document.getElementById("countdown-sound");
 
 			function startTest() {
 				const nameVal = nameInput.value.trim();
@@ -288,27 +292,23 @@
 					);
 					let colRowsData = { numbers: numbers, inputs: [] };
 
-					// Container baris terbagi menjadi sisi kiri (angka) dan sisi kanan (jawaban)
 					for (let i = 0; i < numbers.length; i++) {
 						const rowContainer = document.createElement("div");
 						rowContainer.className =
 							"flex items-center justify-between w-full h-5 my-0.5";
 
-						// Sisi Kiri: Angka soal
 						const numDiv = document.createElement("div");
 						numDiv.className =
 							"text-base md:text-lg font-bold text-slate-800 w-1/2 text-center";
 						numDiv.innerText = numbers[i];
 						rowContainer.appendChild(numDiv);
 
-						// Sisi Kanan: Tempat Kosong (hanya placeholder penyeimbang jika baris terakhir)
 						const rightPlaceholder = document.createElement("div");
 						rightPlaceholder.className = "w-1/2 flex justify-center";
 						rowContainer.appendChild(rightPlaceholder);
 
 						colWrapper.appendChild(rowContainer);
 
-						// Render kotak isian di antara angka (selalu di sebelah kanan)
 						if (i < numbers.length - 1) {
 							const sum = numbers[i] + numbers[i + 1];
 							const correctDigit = sum % 10;
@@ -324,12 +324,10 @@
 							inputRowContainer.className =
 								"flex items-center justify-between w-full h-5 my-0.5 relative z-10";
 
-							// Sisi kiri kosong sejajar dengan angka di atas/bawahnya
 							const leftEmpty = document.createElement("div");
 							leftEmpty.className = "w-1/2";
 							inputRowContainer.appendChild(leftEmpty);
 
-							// Sisi kanan berisi kotak input jawaban
 							const inputWrapper = document.createElement("div");
 							inputWrapper.className = "w-1/2 flex justify-center items-center";
 
@@ -465,11 +463,25 @@
 					timeLeft--;
 					updateTimerDisplay();
 
+					// Mainkan suara countdown ketika waktu sisa tepat 10 detik
+					if (timeLeft === 10) {
+						playCountdownSound();
+					}
+
 					if (timeLeft <= 0) {
 						clearInterval(timerInterval);
 						nextColumn();
 					}
 				}, 1000);
+			}
+
+			function playCountdownSound() {
+				if (countdownSound) {
+					countdownSound.currentTime = 0; // Reset ke awal jika diputar ulang
+					countdownSound.play().catch((error) => {
+						console.log("Gagal memutar audio countdown:", error);
+					});
+				}
 			}
 
 			function updateTimerDisplay() {

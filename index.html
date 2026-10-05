@@ -42,20 +42,6 @@
 				background-color: #cbd5e1;
 				border-radius: 4px;
 			}
-			.row-number {
-				height: 45px;
-				display: flex;
-				align-items: center;
-				justify-content: flex-start;
-			}
-			.row-input {
-				height: 0px;
-				display: flex;
-				align-items: center;
-				justify-content: flex-end;
-				position: relative;
-				z-index: 10;
-			}
 		</style>
 	</head>
 	<body
@@ -95,11 +81,11 @@
 					class="bg-slate-50 rounded-xl p-4 text-slate-600 text-xs mb-6 text-left leading-relaxed border border-slate-200"
 				>
 					<strong>Ketentuan Tes:</strong><br />
-					• 20 Kolom, masing-masing <strong>101 Angka</strong> (100 baris isian
+					• 20 Kolom, total <strong>101 Angka</strong> (100 baris isian
 					penjumlahan).<br />
 					• Waktu pengerjaan: <strong>1 menit (60 detik)</strong> per kolom.<br />
-					• Auto-scroll presisi: bergeser tepat 1 baris ke bawah setiap
-					terisi.<br />
+					• Sistem scroll mulus & terpusat otomatis agar tidak ada angka
+					terpotong.<br />
 					• Grafik performa detail & laporan PDF tersedia di akhir.
 				</div>
 
@@ -166,7 +152,7 @@
 				<h1 class="text-3xl font-bold text-slate-800 mb-1">Tes Selesai!</h1>
 				<p id="completion-subtitle" class="text-slate-600 mb-4 text-sm">
 					Terima kasih telah menyelesaikan Tes Pauli. Berikut rincian grafik
-					performa dan tabel jawaban (101 Angka & 100 Isian):
+					performa dan tabel jawaban:
 				</p>
 
 				<!-- Container 3 Grafik Per Kolom dengan Informasi Detail -->
@@ -288,13 +274,13 @@
 				for (let c = 0; c < TOTAL_COLS; c++) {
 					const colWrapper = document.createElement("div");
 					colWrapper.className =
-						"flex flex-col pauli-column opacity-40 pointer-events-none transition-opacity duration-300 w-24 md:w-32 shrink-0 border border-transparent";
+						"flex flex-col pauli-column opacity-40 pointer-events-none transition-opacity duration-300 w-28 md:w-32 shrink-0 border border-transparent bg-white rounded-lg shadow-sm p-3";
 					colWrapper.dataset.col = c;
 
 					const header = document.createElement("div");
 					header.className =
-						"text-center font-bold text-slate-400 bg-slate-200 py-1 mb-4 rounded text-sm sticky top-0 z-20";
-					header.innerText = (c + 1).toString().padStart(2, "0");
+						"text-center font-bold text-slate-700 bg-slate-200 py-1.5 mb-3 rounded text-xs sticky top-0 z-20";
+					header.innerText = `KOLOM ${(c + 1).toString().padStart(2, "0")}`;
 					colWrapper.appendChild(header);
 
 					const numbers = Array.from({ length: NUMBERS_PER_COL }, () =>
@@ -302,13 +288,27 @@
 					);
 					let colRowsData = { numbers: numbers, inputs: [] };
 
+					// Container baris terbagi menjadi sisi kiri (angka) dan sisi kanan (jawaban)
 					for (let i = 0; i < numbers.length; i++) {
+						const rowContainer = document.createElement("div");
+						rowContainer.className =
+							"flex items-center justify-between w-full h-5 my-0.5";
+
+						// Sisi Kiri: Angka soal
 						const numDiv = document.createElement("div");
 						numDiv.className =
-							"row-number text-xl md:text-2xl font-bold text-slate-800 pl-4";
+							"text-base md:text-lg font-bold text-slate-800 w-1/2 text-center";
 						numDiv.innerText = numbers[i];
-						colWrapper.appendChild(numDiv);
+						rowContainer.appendChild(numDiv);
 
+						// Sisi Kanan: Tempat Kosong (hanya placeholder penyeimbang jika baris terakhir)
+						const rightPlaceholder = document.createElement("div");
+						rightPlaceholder.className = "w-1/2 flex justify-center";
+						rowContainer.appendChild(rightPlaceholder);
+
+						colWrapper.appendChild(rowContainer);
+
+						// Render kotak isian di antara angka (selalu di sebelah kanan)
 						if (i < numbers.length - 1) {
 							const sum = numbers[i] + numbers[i + 1];
 							const correctDigit = sum % 10;
@@ -320,24 +320,37 @@
 								status: "kosong",
 							});
 
+							const inputRowContainer = document.createElement("div");
+							inputRowContainer.className =
+								"flex items-center justify-between w-full h-7 my-0.5 relative z-10";
+
+							// Sisi kiri kosong sejajar dengan angka di atas/bawahnya
+							const leftEmpty = document.createElement("div");
+							leftEmpty.className = "w-1/2";
+							inputRowContainer.appendChild(leftEmpty);
+
+							// Sisi kanan berisi kotak input jawaban
 							const inputWrapper = document.createElement("div");
-							inputWrapper.className = "row-input pr-2 md:pr-4";
+							inputWrapper.className = "w-1/2 flex justify-center items-center";
 
 							const input = document.createElement("input");
 							input.type = "text";
 							input.inputMode = "numeric";
 							input.maxLength = 1;
 							input.className =
-								"pauli-input w-8 h-8 md:w-10 md:h-10 text-center border-2 border-slate-300 bg-white text-slate-700 text-lg md:text-xl font-bold transition-all shadow-sm rounded-sm";
+								"pauli-input w-6 h-6 md:w-7 md:h-7 text-center border border-slate-300 bg-white text-slate-700 text-xs md:text-sm font-bold transition-all shadow-sm rounded-sm";
 							input.dataset.col = c;
 							input.dataset.row = i;
 
 							input.addEventListener("input", handleInput);
 
 							inputWrapper.appendChild(input);
-							colWrapper.appendChild(inputWrapper);
+							inputRowContainer.appendChild(inputWrapper);
+
+							colWrapper.appendChild(inputRowContainer);
 						}
 					}
+
 					testRawData.push(colRowsData);
 					pauliBoard.appendChild(colWrapper);
 				}
@@ -356,8 +369,8 @@
 							"opacity-100",
 							"bg-white",
 							"rounded-lg",
-							"shadow-sm",
-							"border-blue-200",
+							"shadow-md",
+							"border-blue-300",
 						);
 					} else {
 						col.classList.add(
@@ -369,8 +382,8 @@
 							"opacity-100",
 							"bg-white",
 							"rounded-lg",
-							"shadow-sm",
-							"border-blue-200",
+							"shadow-md",
+							"border-blue-300",
 						);
 					}
 				});
@@ -379,7 +392,7 @@
 				if (activeCol) {
 					activeCol.scrollIntoView({
 						behavior: "smooth",
-						block: "start",
+						block: "nearest",
 						inline: "center",
 					});
 					setTimeout(() => {
@@ -391,9 +404,10 @@
 							firstInput.scrollIntoView({
 								behavior: "smooth",
 								block: "center",
+								inline: "nearest",
 							});
 						}
-					}, 300);
+					}, 250);
 				}
 			}
 
@@ -433,7 +447,11 @@
 					);
 					if (nextInput) {
 						nextInput.focus();
-						nextInput.scrollIntoView({ behavior: "smooth", block: "center" });
+						nextInput.scrollIntoView({
+							behavior: "smooth",
+							block: "center",
+							inline: "nearest",
+						});
 					}
 				}
 			}
@@ -512,7 +530,6 @@
 					wrong: grandWrong,
 				};
 
-				// Update teks ringkasan info di atas grafik
 				document.getElementById("stat-label-filled").innerText =
 					`Total Dikerjakan: ${grandFilled} dari 2000 soal`;
 				document.getElementById("stat-label-correct").innerText =
@@ -636,7 +653,6 @@
 				}
 				thead.appendChild(headTr);
 
-				// Total baris visual: 101 Angka (A1-A101) diselingi 100 Isian (J1-J100) = 201 baris
 				let maxVisualRows = NUMBERS_PER_COL + INPUTS_PER_COL;
 				for (let vRow = 0; vRow < maxVisualRows; vRow++) {
 					let tr = document.createElement("tr");
@@ -706,7 +722,6 @@
 					17,
 				);
 
-				// Masukkan Gambar 3 Grafik ke PDF
 				if (chartInstances.length === 3) {
 					const imgFilled = chartInstances[0].toBase64Image();
 					const imgCorrect = chartInstances[1].toBase64Image();
